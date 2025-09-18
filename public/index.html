@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Mental Health Companion</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Login/Register Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <div class="auth-tabs">
+                <button class="tab-button active" onclick="switchTab('login')">Login</button>
+                <button class="tab-button" onclick="switchTab('register')">Register</button>
+            </div>
+            
+            <div id="loginForm" class="auth-form active">
+                <h2>Welcome Back</h2>
+                <form id="loginFormElement">
+                    <div class="form-group">
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+            </div>
+            
+            <div id="registerForm" class="auth-form">
+                <h2>Create Account</h2>
+                <form id="registerFormElement">
+                    <div class="form-group">
+                        <label for="registerUsername">Username</label>
+                        <input type="text" id="registerUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail">Email</label>
+                        <input type="email" id="registerEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Password</label>
+                        <input type="password" id="registerPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerLanguage">Language</label>
+                        <select id="registerLanguage">
+                            <option value="en">English</option>
+                            <option value="hi">हिन्दी (Hindi)</option>
+                            <option value="ta">தமிழ் (Tamil)</option>
+                            <option value="es">Español (Spanish)</option>
+                            <option value="fr">Français (French)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Register</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" class="hidden">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-heart"></i> AI Mental Health Companion</h1>
+                <div class="header-actions">
+                    <select id="languageSelector" class="language-selector">
+                        <option value="en">English</option>
+                        <option value="hi">हिन्दी</option>
+                        <option value="ta">தமிழ்</option>
+                        <option value="es">Español</option>
+                        <option value="fr">Français</option>
+                    </select>
+                    <button id="logoutBtn" class="btn btn-secondary">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <button class="nav-item active" data-section="dashboard">
+                <i class="fas fa-chart-line"></i>
+                <span data-translate="nav.dashboard">Dashboard</span>
+            </button>
+            <button class="nav-item" data-section="mood">
+                <i class="fas fa-smile"></i>
+                <span data-translate="nav.mood">Mood Tracker</span>
+            </button>
+            <button class="nav-item" data-section="chat">
+                <i class="fas fa-comments"></i>
+                <span data-translate="nav.chat">AI Chat</span>
+            </button>
+            <button class="nav-item" data-section="profile">
+                <i class="fas fa-user"></i>
+                <span data-translate="nav.profile">Profile</span>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section active">
+                <div class="section-header">
+                    <h2 data-translate="dashboard.title">Your Mental Health Dashboard</h2>
+                    <div class="dashboard-controls">
+                        <select id="trendPeriod">
+                            <option value="7">Last 7 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Alerts -->
+                <div id="alerts" class="alerts-container"></div>
+
+                <!-- Quick Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-day"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="streakCount">0</h3>
+                            <p data-translate="dashboard.streak">Day Streak</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="averageMood">-</h3>
+                            <p data-translate="dashboard.average">Average Mood</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="recommendationsCount">0</h3>
+                            <p data-translate="dashboard.recommendations">Recommendations</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="charts-container">
+                    <div class="chart-card">
+                        <h3 data-translate="dashboard.moodTrend">Mood Trend</h3>
+                        <canvas id="moodTrendChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3 data-translate="dashboard.moodDistribution">Mood Distribution</h3>
+                        <canvas id="moodDistributionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Insights -->
+                <div class="insights-container">
+                    <h3 data-translate="dashboard.insights">Insights</h3>
+                    <div id="insightsList" class="insights-list"></div>
+                </div>
+            </section>
+
+            <!-- Mood Tracker Section -->
+            <section id="mood" class="section">
+                <div class="section-header">
+                    <h2 data-translate="mood.title">How are you feeling today?</h2>
+                </div>
+
+                <div class="mood-tracker">
+                    <div class="mood-input-container">
+                        <div class="mood-emoji-grid">
+                            <button class="mood-option" data-mood="very-happy" data-emoji="😄">
+                                <span class="emoji">😄</span>
+                                <span data-translate="mood.very-happy">Very Happy</span>
+                            </button>
+                            <button class="mood-option" data-mood="happy" data-emoji="😊">
+                                <span class="emoji">😊</span>
+                                <span data-translate="mood.happy">Happy</span>
+                            </button>
+                            <button class="mood-option" data-mood="neutral" data-emoji="😐">
+                                <span class="emoji">😐</span>
+                                <span data-translate="mood.neutral">Neutral</span>
+                            </button>
+                            <button class="mood-option" data-mood="sad" data-emoji="😢">
+                                <span class="emoji">😢</span>
+                                <span data-translate="mood.sad">Sad</span>
+                            </button>
+                            <button class="mood-option" data-mood="very-sad" data-emoji="😭">
+                                <span class="emoji">😭</span>
+                                <span data-translate="mood.very-sad">Very Sad</span>
+                            </button>
+                            <button class="mood-option" data-mood="anxious" data-emoji="😰">
+                                <span class="emoji">😰</span>
+                                <span data-translate="mood.anxious">Anxious</span>
+                            </button>
+                            <button class="mood-option" data-mood="angry" data-emoji="😠">
+                                <span class="emoji">😠</span>
+                                <span data-translate="mood.angry">Angry</span>
+                            </button>
+                            <button class="mood-option" data-mood="excited" data-emoji="🤩">
+                                <span class="emoji">🤩</span>
+                                <span data-translate="mood.excited">Excited</span>
+                            </button>
+                            <button class="mood-option" data-mood="calm" data-emoji="😌">
+                                <span class="emoji">😌</span>
+                                <span data-translate="mood.calm">Calm</span>
+                            </button>
+                        </div>
+
+                        <div class="intensity-slider">
+                            <label for="intensitySlider" data-translate="mood.intensity">Intensity (1-10):</label>
+                            <input type="range" id="intensitySlider" min="1" max="10" value="5">
+                            <span id="intensityValue">5</span>
+                        </div>
+
+                        <div class="mood-notes">
+                            <label for="moodNotes" data-translate="mood.notes">Notes (optional):</label>
+                            <textarea id="moodNotes" placeholder="How are you feeling? What's on your mind?"></textarea>
+                        </div>
+
+                        <div class="mood-tags">
+                            <label data-translate="mood.tags">Tags:</label>
+                            <div class="tag-options">
+                                <label class="tag-option">
+                                    <input type="checkbox" value="work"> Work
+                                </label>
+                                <label class="tag-option">
+                                    <input type="checkbox" value="family"> Family
+                                </label>
+                                <label class="tag-option">
+                                    <input type="checkbox" value="health"> Health
+                                </label>
+                                <label class="tag-option">
+                                    <input type="checkbox" value="relationships"> Relationships
+                                </label>
+                                <label class="tag-option">
+                                    <input type="checkbox" value="finances"> Finances
+                                </label>
+                                <label class="tag-option">
+                                    <input type="checkbox" value="weather"> Weather
+                                </label>
+                                <label class="tag-option">
+                                    <input type="checkbox" value="social"> Social
+                                </label>
+                                <label class="tag-option">
+                                    <input type="checkbox" value="exercise"> Exercise
+                                </label>
+                                <label class="tag-option">
+                                    <input type="checkbox" value="sleep"> Sleep
+                                </label>
+                                <label class="tag-option">
+                                    <input type="checkbox" value="food"> Food
+                                </label>
+                            </div>
+                        </div>
+
+                        <button id="submitMood" class="btn btn-primary" disabled>
+                            <i class="fas fa-heart"></i> <span data-translate="mood.submit">Submit Mood</span>
+                        </button>
+                    </div>
+
+                    <!-- Today's Entry Display -->
+                    <div id="todayEntry" class="today-entry hidden">
+                        <h3 data-translate="mood.today">Today's Entry</h3>
+                        <div class="entry-display">
+                            <div class="entry-mood">
+                                <span id="todayEmoji" class="emoji-large"></span>
+                                <div class="entry-details">
+                                    <h4 id="todayMood"></h4>
+                                    <p id="todayIntensity"></p>
+                                    <p id="todayNotes"></p>
+                                    <div id="todayTags" class="entry-tags"></div>
+                                </div>
+                            </div>
+                            <div class="entry-actions">
+                                <button id="editEntry" class="btn btn-secondary">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button id="deleteEntry" class="btn btn-danger">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Recommendation -->
+                    <div id="aiRecommendation" class="ai-recommendation hidden">
+                        <h3 data-translate="mood.recommendation">AI Recommendation</h3>
+                        <div class="recommendation-content">
+                            <div class="recommendation-icon">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="recommendation-text">
+                                <p id="recommendationText"></p>
+                                <span class="recommendation-type" id="recommendationType"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chat Section -->
+            <section id="chat" class="section">
+                <div class="section-header">
+                    <h2 data-translate="chat.title">AI Mental Health Companion</h2>
+                    <p data-translate="chat.subtitle">I'm here to listen and support you. How can I help today?</p>
+                </div>
+
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="chat-message ai-message">
+                            <div class="message-avatar">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="message-content">
+                                <p data-translate="chat.welcome">Hello! I'm your AI mental health companion. I'm here to listen, support, and provide guidance. How are you feeling today?</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat-input-container">
+                        <div class="quick-responses" id="quickResponses">
+                            <button class="quick-response-btn" data-message="I'm feeling anxious">
+                                <span data-translate="chat.anxious">I'm feeling anxious</span>
+                            </button>
+                            <button class="quick-response-btn" data-message="I need someone to talk to">
+                                <span data-translate="chat.need_support">I need someone to talk to</span>
+                            </button>
+                            <button class="quick-response-btn" data-message="Suggest a mindfulness exercise">
+                                <span data-translate="chat.mindfulness">Suggest a mindfulness exercise</span>
+                            </button>
+                        </div>
+                        
+                        <div class="chat-input">
+                            <textarea id="chatInput" placeholder="Type your message here..." rows="2"></textarea>
+                            <button id="sendMessage" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Profile Section -->
+            <section id="profile" class="section">
+                <div class="section-header">
+                    <h2 data-translate="profile.title">Your Profile</h2>
+                </div>
+
+                <div class="profile-container">
+                    <div class="profile-card">
+                        <div class="profile-header">
+                            <div class="profile-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="profile-info">
+                                <h3 id="profileUsername"></h3>
+                                <p id="profileEmail"></p>
+                            </div>
+                        </div>
+
+                        <div class="profile-settings">
+                            <h4 data-translate="profile.settings">Settings</h4>
+                            
+                            <div class="setting-group">
+                                <label for="profileLanguage" data-translate="profile.language">Language:</label>
+                                <select id="profileLanguage">
+                                    <option value="en">English</option>
+                                    <option value="hi">हिन्दी (Hindi)</option>
+                                    <option value="ta">தமிழ் (Tamil)</option>
+                                    <option value="es">Español (Spanish)</option>
+                                    <option value="fr">Français (French)</option>
+                                </select>
+                            </div>
+
+                            <div class="setting-group">
+                                <label for="reminderTime" data-translate="profile.reminder">Daily Reminder Time:</label>
+                                <input type="time" id="reminderTime" value="20:00">
+                            </div>
+
+                            <div class="setting-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="notificationsEnabled" checked>
+                                    <span data-translate="profile.notifications">Enable notifications</span>
+                                </label>
+                            </div>
+
+                            <button id="saveProfile" class="btn btn-primary">
+                                <i class="fas fa-save"></i> <span data-translate="profile.save">Save Changes</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="profile-stats">
+                        <h4 data-translate="profile.stats">Your Statistics</h4>
+                        <div class="stats-list">
+                            <div class="stat-item">
+                                <span data-translate="profile.total_entries">Total Mood Entries:</span>
+                                <span id="totalEntries">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span data-translate="profile.member_since">Member Since:</span>
+                                <span id="memberSince">-</span>
+                            </div>
+                            <div class="stat-item">
+                                <span data-translate="profile.last_login">Last Login:</span>
+                                <span id="lastLogin">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="loading-spinner hidden">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
